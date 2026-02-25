@@ -8,9 +8,10 @@ import (
 )
 
 type AppHandlers struct {
-	CustomerHandler  *http.CustomerHandler
-	ServiceHandler   *http.ServiceHandler
-	TherapistHandler *http.TherapistHandler
+	CustomerHandler    *http.CustomerHandler
+	ServiceHandler     *http.ServiceHandler
+	TherapistHandler   *http.TherapistHandler
+	TransactionHandler *http.TransactionHandler
 }
 
 func InitHandlers(db *sql.DB) *AppHandlers {
@@ -26,5 +27,9 @@ func InitHandlers(db *sql.DB) *AppHandlers {
 	therapistUsecase := usecase.NewTherapistUsecase(therapistRepo)
 	therapistHandler := http.NewTherapistHandler(therapistUsecase)
 
-	return &AppHandlers{CustomerHandler: customerHandler, ServiceHandler: serviceHandler, TherapistHandler: therapistHandler}
+	transactionRepo := repository.NewTransactionRepository(db)
+	transactionUsecase := usecase.NewTransactionUsecase(transactionRepo, serviceRepo, customerRepo)
+	transactionHandler := http.NewTransactionHandler(transactionUsecase)
+
+	return &AppHandlers{CustomerHandler: customerHandler, ServiceHandler: serviceHandler, TherapistHandler: therapistHandler, TransactionHandler: transactionHandler}
 }

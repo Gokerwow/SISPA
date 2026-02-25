@@ -1,6 +1,7 @@
 package http
 
 import (
+	"net/http"
 	"sispa-backend/internal/domain"
 	"sispa-backend/internal/usecase"
 	"strconv"
@@ -27,112 +28,112 @@ func (s *ServiceHandler) RegisterRoutes(r *gin.Engine) {
 	}
 }
 
-func (s *ServiceHandler) Create(ctx *gin.Context) {
+func (s *ServiceHandler) Create(c *gin.Context) {
 	var input domain.Service
 
-	if err := ctx.ShouldBindJSON(&input); err != nil {
-		ctx.JSON(400, gin.H{"error": "Invalid input data"})
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input data"})
 		return
 	}
 
-	err := s.usecase.RegisterNewService(&input)
+	err := s.usecase.RegisterNewService(c, &input)
 
 	if err != nil {
-		ctx.JSON(409, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	ctx.JSON(201, gin.H{"Message": "Service Created Successfully"})
+	c.JSON(http.StatusCreated, gin.H{"Message": "Service Created Successfully"})
 
 }
 
-func (s *ServiceHandler) GetAll(ctx *gin.Context) {
+func (s *ServiceHandler) GetAll(c *gin.Context) {
 
-	services, err := s.usecase.GetAll()
+	services, err := s.usecase.GetAll(c)
 
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	if services == nil {
-		ctx.JSON(400, gin.H{"error": "Theres no service data existed"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Theres no service data existed"})
 		return
 	}
 
-	ctx.JSON(201, services)
+	c.JSON(http.StatusOK, services)
 
 }
 
-func (s *ServiceHandler) GetByID(ctx *gin.Context) {
-	id := ctx.Param("id")
+func (s *ServiceHandler) GetByID(c *gin.Context) {
+	id := c.Param("id")
 	idINT, err := strconv.Atoi(id)
 
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": "Invalid ID format"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
-	service, err := s.usecase.GetByID(idINT)
+	service, err := s.usecase.GetByID(c, idINT)
 
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	if service == nil {
-		ctx.JSON(404, gin.H{"error": "Theres no service data existed"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Theres no service data existed"})
 		return
 	}
 
-	ctx.JSON(201, service)
+	c.JSON(http.StatusOK, service)
 
 }
 
-func (s *ServiceHandler) Update(ctx *gin.Context) {
-	id := ctx.Param("id")
+func (s *ServiceHandler) Update(c *gin.Context) {
+	id := c.Param("id")
 	idINT, err := strconv.Atoi(id)
 
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": "Invalid ID format"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
 	var input domain.Service
 
-	if err := ctx.ShouldBindJSON(&input); err != nil {
-		ctx.JSON(400, gin.H{"error": "Invalid input data"})
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input data"})
 		return
 	}
 
 	input.ID = idINT
 
-	service, err := s.usecase.Update(&input)
+	service, err := s.usecase.Update(c, &input)
 
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(201, service)
+	c.JSON(http.StatusOK, service)
 
 }
 
-func (s *ServiceHandler) Delete(ctx *gin.Context) {
-	id := ctx.Param("id")
+func (s *ServiceHandler) Delete(c *gin.Context) {
+	id := c.Param("id")
 	idINT, err := strconv.Atoi(id)
 
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": "Invalid ID format"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
-	err = s.usecase.Delete(idINT)
+	err = s.usecase.Delete(c, idINT)
 
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(201, gin.H{"Message": "Service Successfully deleted"})
+	c.JSON(http.StatusOK, gin.H{"Message": "Service Successfully deleted"})
 
 }

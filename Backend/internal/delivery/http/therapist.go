@@ -1,6 +1,7 @@
 package http
 
 import (
+	"net/http"
 	"sispa-backend/internal/domain"
 	"sispa-backend/internal/usecase"
 	"strconv"
@@ -27,107 +28,108 @@ func (h *TherapistHandler) RegisterRoutes(r *gin.Engine) {
 	}
 }
 
-func (h *TherapistHandler) Create(ctx *gin.Context) {
+func (h *TherapistHandler) Create(c *gin.Context) {
 	var input domain.Therapist
 
-	if err := ctx.ShouldBindJSON(&input); err != nil {
+	if err := c.ShouldBindJSON(&input); err != nil {
 		// 💡 This will tell you EXACTLY which field is the traitor
-		ctx.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	err := h.usecase.RegisterNewTherapist(&input)
+	err := h.usecase.RegisterNewTherapist(c, &input)
 
 	if err != nil {
-		ctx.JSON(409, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(201, gin.H{"Message": "Therapist Created Successfully"})
+	c.JSON(http.StatusCreated, gin.H{"Message": "Therapist Created Successfully"})
 
 }
 
-func (h *TherapistHandler) GetAll(ctx *gin.Context) {
-	therapists, err := h.usecase.GetAll()
+func (h *TherapistHandler) GetAll(c *gin.Context) {
+	therapists, err := h.usecase.GetAllTherapist(c)
 
 	if err != nil {
-		ctx.JSON(409, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(201, therapists)
+	c.JSON(http.StatusOK, therapists)
 
 }
-func (h *TherapistHandler) GetByID(ctx *gin.Context) {
-	idParam := ctx.Param("id")
+
+func (h *TherapistHandler) GetByID(c *gin.Context) {
+	idParam := c.Param("id")
 	id, err := strconv.Atoi(idParam)
 
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": "Invalid ID format"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
-	therapists, err := h.usecase.GetByID(id)
+	therapists, err := h.usecase.GetByID(c, id)
 
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(201, therapists)
+	c.JSON(http.StatusOK, therapists)
 
 }
 
-func (h *TherapistHandler) Update(ctx *gin.Context) {
-	id := ctx.Param("id")
+func (h *TherapistHandler) Update(c *gin.Context) {
+	id := c.Param("id")
 	idINT, err := strconv.Atoi(id)
 
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": "Invalid ID format"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
 	var input domain.Therapist
 
-	if err := ctx.ShouldBindJSON(&input); err != nil {
-		ctx.JSON(400, gin.H{"error": "Invalid input data"})
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input data"})
 		return
 	}
 
 	input.ID = idINT
 
-	therapist, err := h.usecase.Update(&input)
+	therapist, err := h.usecase.Update(c, &input)
 
 	if err != nil {
 		// This will show you if it's a "Duplicate Entry", "Data Truncation",
 		// or "Table not found" error.
-		ctx.JSON(409, gin.H{
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":      "Backend Error: " + err.Error(),
 			"suggestion": "Check if you are sending all required fields",
 		})
 		return
 	}
 
-	ctx.JSON(201, therapist)
+	c.JSON(http.StatusOK, therapist)
 
 }
 
-func (h *TherapistHandler) Delete(ctx *gin.Context) {
-	id := ctx.Param("id")
+func (h *TherapistHandler) Delete(c *gin.Context) {
+	id := c.Param("id")
 	idINT, err := strconv.Atoi(id)
 
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": "Invalid ID format"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
-	err = h.usecase.Delete(idINT)
+	err = h.usecase.Delete(c, idINT)
 
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(201, gin.H{"Message": "Therapist Successfully deleted"})
+	c.JSON(http.StatusOK, gin.H{"Message": "Therapist Successfully deleted"})
 
 }

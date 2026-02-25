@@ -1,6 +1,7 @@
 package http
 
 import (
+	"net/http"
 	"sispa-backend/internal/domain"
 	"strconv"
 
@@ -15,6 +16,7 @@ func NewCustomerHandler(u domain.CustomerUsecase) *CustomerHandler {
 	return &CustomerHandler{usecase: u}
 }
 
+// TODO: Refactor status codes to net/http
 // ROUTES ATAU PATH BUAT API
 func (c *CustomerHandler) RegisterRoutes(r *gin.Engine) {
 	group := r.Group("/customers")
@@ -32,7 +34,7 @@ func (c *CustomerHandler) Register(ctx *gin.Context) {
 	var input domain.Customer
 
 	if err := ctx.ShouldBindJSON(&input); err != nil {
-		ctx.JSON(400, gin.H{"error": "Invalid input data"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input data"})
 		return
 	}
 
@@ -41,7 +43,7 @@ func (c *CustomerHandler) Register(ctx *gin.Context) {
 	err := c.usecase.RegisterNewCustomer(timeoutContext, &input)
 
 	if err != nil {
-		ctx.JSON(409, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

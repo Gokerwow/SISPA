@@ -15,10 +15,10 @@ func NewTransactionRepository(db *sql.DB) domain.TransactionRepository {
 	return &sqlTransactionRepository{db: db}
 }
 
-func (r *sqlTransactionRepository) Store(c context.Context, invoice *domain.Invoice, items []domain.InvoiceItem) error {
+func (r *sqlTransactionRepository) Store(c context.Context, invoice *domain.Invoice, items []domain.InvoiceItem) (int, error) {
 	tx, err := r.db.Begin()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	defer func() {
@@ -31,11 +31,11 @@ func (r *sqlTransactionRepository) Store(c context.Context, invoice *domain.Invo
 	}()
 
 	queryHeader := `
-		INSERT INTO invoices (nota_number, subtotal, discount_amount, grand_total, status, date) 
+		INSERT INTO invoices (nota_number, sub_total, discount_amount, grand_total, status, date) 
 		VALUES (?, ?, ?, ?, ?, ?)
 	`
 
-	result, err := tx.Exec(queryHeader,
+	result, err := tx.ExecContext(c, queryHeader,
 		invoice.NotaNumber,
 		invoice.Subtotal,
 		invoice.DiscountAmount,
@@ -45,40 +45,41 @@ func (r *sqlTransactionRepository) Store(c context.Context, invoice *domain.Invo
 	)
 
 	if err != nil {
-		return err // This triggers the defer Rollback
+		return 0, err // This triggers the defer Rollback
 	}
 
 	id, err := result.LastInsertId()
 	if err != nil {
-		return err
+		return 0, err
 	}
 	invoiceID := int(id)
 
 	// INSERT THE ITEMS
 	queryItem := `
-		INSERT INTO invoice_items (invoice_id, therapist_id, service_id, customer_id, price) 
+		INSERT INTO invoices_items (invoice_id, therapist_id, service_id, customer_id, price) 
 		VALUES (?, ?, ?, ?, ?)
 	`
 
 	// OPTIMIZATION BIAR GAK NGULANG MANGGIL EXEC ORI DI DALAM LOOP
 	stmt, err := tx.Prepare(queryItem)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	// CLOSE CONNECTION SETELAH FUNCTION SELESAI
 	defer stmt.Close()
 
 	for _, item := range items {
-		_, err = stmt.Exec(invoiceID, item.TherapistID, item.ServiceID, item.CustomerID, item.Price)
+		_, err = stmt.ExecContext(c, invoiceID, item.TherapistID, item.ServiceID, item.CustomerID, item.Price)
 		if err != nil {
-			return err // If one item fails, the WHOLE invoice is cancelled
+			return 0, err // If one item fails, the WHOLE invoice is cancelled
 		}
 	}
 
 	if err = tx.Commit(); err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+
+	return invoiceID, nil
 }
 
 func (r *sqlTransactionRepository) GetAllHeader(c context.Context) ([]domain.Invoice, error) {
@@ -88,7 +89,7 @@ func (r *sqlTransactionRepository) GetAllHeader(c context.Context) ([]domain.Inv
 
 	transactions := []domain.Invoice{}
 
-	rows, err := r.db.Query(query)
+	rows, err := r.db.QueryContext(c, query)
 	if err != nil {
 		return transactions, err
 	}
@@ -97,7 +98,7 @@ func (r *sqlTransactionRepository) GetAllHeader(c context.Context) ([]domain.Inv
 	for rows.Next() {
 		var t domain.Invoice
 
-		err := rows.Scan(&t.NotaNumber, &t.Subtotal, &t.DiscountAmount, &t.GrandTotal, &t.Status, &t.Date, &t.CreatedAt)
+		err := rows.Scan(&t.ID, &t.NotaNumber, &t.Subtotal, &t.DiscountAmount, &t.GrandTotal, &t.Status, &t.Date, &t.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -119,7 +120,7 @@ func (r *sqlTransactionRepository) GetHeaderByID(c context.Context, id int) (*do
 
 	var h domain.Invoice
 
-	err := r.db.QueryRow(query, id).Scan(&h.ID, &h.NotaNumber, &h.Subtotal, &h.DiscountAmount, &h.GrandTotal, &h.Status, &h.Date, &h.CreatedAt)
+	err := r.db.QueryRowContext(c, query, id).Scan(&h.ID, &h.NotaNumber, &h.Subtotal, &h.DiscountAmount, &h.GrandTotal, &h.Status, &h.Date, &h.CreatedAt)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -139,7 +140,7 @@ func (r *sqlTransactionRepository) GetDetailByID(c context.Context, id int) ([]d
 	`
 	details := []domain.InvoiceItem{}
 
-	rows, err := r.db.Query(query, id)
+	rows, err := r.db.QueryContext(c, query, id)
 
 	if err != nil {
 		return details, err
@@ -164,37 +165,26 @@ func (r *sqlTransactionRepository) GetDetailByID(c context.Context, id int) ([]d
 
 }
 
-func (r *sqlTransactionRepository) UpdateStatus(c context.Context, id int, status string) (*domain.Invoice, []domain.InvoiceItem, error) {
+func (r *sqlTransactionRepository) UpdateStatus(c context.Context, id int, status string) error {
 	query := `
 		UPDATE invoices
 		SET status = ?
 		WHERE id = ?
 	`
 
-	result, err := r.db.Exec(query, status, id)
+	result, err := r.db.ExecContext(c, query, status, id)
 	if err != nil {
-		return nil, []domain.InvoiceItem{}, err
+		return err
 	}
 
 	rows, err := result.RowsAffected()
 	if err != nil {
-		return nil, []domain.InvoiceItem{}, err
+		return err
 	}
 
 	if rows == 0 {
 		// 💡 AHA! The query ran, but no invoice had that ID!
-		return nil, []domain.InvoiceItem{}, errors.New("invoice not found or status already matches")
+		return errors.New("invoice not found or status already matches")
 	}
-
-	header, err := r.GetHeaderByID(c, id)
-	if err != nil {
-		return nil, []domain.InvoiceItem{}, err
-	}
-
-	items, err := r.GetDetailByID(c, id)
-	if err != nil {
-		return nil, []domain.InvoiceItem{}, err
-	}
-
-	return header, items, nil
+	return nil
 }

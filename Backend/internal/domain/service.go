@@ -1,6 +1,9 @@
 package domain
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 // HARUS UPPER KLLO MAU EXPORT
 type Service struct {
@@ -14,9 +17,17 @@ type Service struct {
 }
 
 type ServiceRepository interface {
-	Create(service *Service) error
-	GetByID(id int) (*Service, error)
-	Update(service *Service) (*Service, error)
-	GetAll() ([]Service, error)
-	Delete(id int) error
+	Create(c context.Context, service *Service) error
+	GetByID(c context.Context, id int) (*Service, error)
+	Update(c context.Context, service *Service) (*Service, error)
+	GetAll(c context.Context) ([]Service, error)
+	Delete(c context.Context, id int) error
+}
+
+type ServiceUsecase interface {
+	RegisterNewService(c context.Context, service *Service) error
+	GetByID(c context.Context, id int) (*Service, error)
+	Update(c context.Context, service *Service) (*Service, error)
+	GetAll(c context.Context) ([]Service, error)
+	Delete(c context.Context, id int) error
 }

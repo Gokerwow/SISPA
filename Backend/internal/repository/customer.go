@@ -28,7 +28,7 @@ func (r *sqlCustomerRepository) Create(c context.Context, customer *domain.Custo
 // 2. Ambil semua data customer
 func (r *sqlCustomerRepository) GetAll(c context.Context) ([]domain.Customer, error) {
 	query := `
-		SELECT id, name, phone, birth_date, address, gender, created_at FROM customers
+		SELECT id, name, phone, birth_date, address, customer_type, created_at FROM customers
 	`
 
 	rows, err := r.db.QueryContext(c, query)
@@ -61,7 +61,7 @@ func (r *sqlCustomerRepository) GetAll(c context.Context) ([]domain.Customer, er
 // 3. Ambil data customer sesuai nomor hp
 func (r *sqlCustomerRepository) GetByPhone(c context.Context, phone string) (*domain.Customer, error) {
 	query := `
-		SELECT id, name, phone, address, gender, note, created_at FROM customers WHERE phone=?
+		SELECT id, name, phone, address, customer_type, note, created_at FROM customers WHERE phone=?
 	`
 
 	var customer domain.Customer
@@ -81,7 +81,7 @@ func (r *sqlCustomerRepository) GetByPhone(c context.Context, phone string) (*do
 // 3. Ambil data customer sesuai nomor hp
 func (r *sqlCustomerRepository) GetByID(c context.Context, id int) (*domain.Customer, error) {
 	query := `
-		SELECT id, name, phone, birth_date, address, gender, note, created_at FROM customers WHERE id=?
+		SELECT id, name, phone, birth_date, address, customer_type, note, created_at FROM customers WHERE id=?
 	`
 
 	var customer domain.Customer
@@ -102,7 +102,7 @@ func (r *sqlCustomerRepository) GetByID(c context.Context, id int) (*domain.Cust
 func (r *sqlCustomerRepository) Update(c context.Context, customer *domain.Customer) (*domain.Customer, error) {
 	query := `
         UPDATE customers 
-        SET name = ?, phone = ?, birth_date = ?, address = ?, gender = ?, note = ?
+        SET name = ?, phone = ?, birth_date = ?, address = ?, customer_type = ?, note = ?
         WHERE id = ?
     `
 

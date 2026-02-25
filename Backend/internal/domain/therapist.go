@@ -1,6 +1,9 @@
 package domain
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type Therapist struct {
 	ID             int        `json:"id"`
@@ -16,9 +19,17 @@ type Therapist struct {
 }
 
 type TherapistRepository interface {
-	Create(therapist *Therapist) error
-	GetByID(id int) (*Therapist, error)
-	Update(service *Therapist) (*Therapist, error)
-	GetAll() ([]Therapist, error)
-	Delete(id int) error
+	Create(c context.Context, therapist *Therapist) error
+	GetByID(c context.Context, id int) (*Therapist, error)
+	Update(c context.Context, service *Therapist) (*Therapist, error)
+	GetAll(c context.Context) ([]Therapist, error)
+	Delete(c context.Context, id int) error
+}
+
+type TherapistUsecase interface {
+	RegisterNewTherapist(c context.Context, therapist *Therapist) error
+	GetAllTherapist(c context.Context) ([]Therapist, error)
+	GetByID(c context.Context, id int) (*Therapist, error)
+	Update(c context.Context, service *Therapist) (*Therapist, error)
+	Delete(c context.Context, id int) error
 }

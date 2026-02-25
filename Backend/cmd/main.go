@@ -28,5 +28,6 @@ func main() {
 	handlers.CustomerHandler.RegisterRoutes(router)
 	handlers.ServiceHandler.RegisterRoutes(router)
 	handlers.TherapistHandler.RegisterRoutes(router)
+	handlers.TransactionHandler.RegisterRoutes(router)
 	router.Run(":8080")
 }

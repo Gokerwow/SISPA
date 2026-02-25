@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"errors"
 	"sispa-backend/internal/domain"
 )
@@ -16,7 +17,7 @@ func NewServiceUsecase(r domain.ServiceRepository) *ServiceUsecase {
 // TODO: tambahin ctx := c.Request.Context()
 // Locgic buat daftar layanan baru
 // kalo nama + harga kosong maka akan return error
-func (u *ServiceUsecase) RegisterNewService(service *domain.Service) error {
+func (u *ServiceUsecase) RegisterNewService(c context.Context, service *domain.Service) error {
 	if service.ServiceName == "" {
 		return errors.New("service name cannot be empty")
 	}
@@ -25,7 +26,7 @@ func (u *ServiceUsecase) RegisterNewService(service *domain.Service) error {
 		return errors.New("cannot register the service: at least one price must be filled")
 	}
 
-	err := u.repo.Create(service)
+	err := u.repo.Create(c, service)
 	if err != nil {
 		return err
 	}
@@ -35,9 +36,9 @@ func (u *ServiceUsecase) RegisterNewService(service *domain.Service) error {
 
 // buat ambil semua data layanan
 // klo kosong return slices []
-func (u *ServiceUsecase) GetAll() ([]domain.Service, error) {
+func (u *ServiceUsecase) GetAll(c context.Context) ([]domain.Service, error) {
 
-	services, err := u.repo.GetAll()
+	services, err := u.repo.GetAll(c)
 
 	if err != nil {
 		return nil, err
@@ -53,9 +54,9 @@ func (u *ServiceUsecase) GetAll() ([]domain.Service, error) {
 
 // buat ambil data layanan sesuai ID
 // klo gada return nil ajah
-func (u *ServiceUsecase) GetByID(id int) (*domain.Service, error) {
+func (u *ServiceUsecase) GetByID(c context.Context, id int) (*domain.Service, error) {
 
-	services, err := u.repo.GetByID(id)
+	services, err := u.repo.GetByID(c, id)
 
 	if err != nil {
 		return nil, err
@@ -65,9 +66,9 @@ func (u *ServiceUsecase) GetByID(id int) (*domain.Service, error) {
 }
 
 // update data layanan sesuai ID
-func (u *ServiceUsecase) Update(service *domain.Service) (*domain.Service, error) {
+func (u *ServiceUsecase) Update(c context.Context, service *domain.Service) (*domain.Service, error) {
 
-	services, err := u.repo.Update(service)
+	services, err := u.repo.Update(c, service)
 
 	if err != nil {
 		return nil, err
@@ -77,9 +78,9 @@ func (u *ServiceUsecase) Update(service *domain.Service) (*domain.Service, error
 }
 
 // hapus data layanan sesuai ID
-func (u *ServiceUsecase) Delete(id int) error {
+func (u *ServiceUsecase) Delete(c context.Context, id int) error {
 
-	err := u.repo.Delete(id)
+	err := u.repo.Delete(c, id)
 
 	if err != nil {
 		return err

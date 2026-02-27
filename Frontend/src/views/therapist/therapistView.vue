@@ -17,7 +17,7 @@ const toast = useToast()
 const fetchTherapists = async () => {
   try {
     const response = await GetAllTherapist()
-    therapists.value = response
+    therapists.value = response.data
     for (const t of therapists.value) {
       t.commission_rate = t.commission_rate ?? 0
     }
@@ -79,7 +79,8 @@ const handleDelete = async (id: number) => {
     toast.success("Customer Deleted Successfully!");
     refreshTrigger.value++
   } catch (error) {
-    const message = error.response?.data?.error || "Failed to delete customer";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const message = (error as any).response?.data?.error || "Failed to delete customer";
     console.error('Error deleting customer:', message)
     toast.error(message);
   }

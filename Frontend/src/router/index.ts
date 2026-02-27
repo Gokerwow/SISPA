@@ -10,6 +10,10 @@ import ServiceEdit from '@/views/service/serviceEdit.vue'
 import TherapistView from '@/views/therapist/therapistView.vue'
 import TherapistCreate from '@/views/therapist/therapistCreate.vue'
 import TherapistEdit from '@/views/therapist/therapistEdit.vue'
+import TransactionView from '@/views/transaction/transactionView.vue'
+import TransactionCreate from '@/views/transaction/transactionCreate.vue'
+import TransactionDetail from '@/views/transaction/transactionDetail.vue'
+import TransactionEdit from '@/views/transaction/transactionEdit.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -87,6 +91,32 @@ const router = createRouter({
               path: 'edit/:id',
               name: 'Edit Therapists',
               component: TherapistEdit
+            },
+          ]
+        },
+        {
+          path: 'transactions',
+          name: 'transactions',
+          children: [
+            {
+              path: '',
+              name: 'Transactions',
+              component: TransactionView
+            },
+            {
+              path: 'create',
+              name: 'Create Transactions',
+              component: TransactionCreate
+            },
+            {
+              path: 'edit/:id',
+              name: 'Edit Transactions',
+              component: TransactionEdit
+            },
+            {
+              path: ':id',
+              name: 'Transactions Detail',
+              component: TransactionDetail
             },
           ]
         },

@@ -12,12 +12,13 @@ const isLoading = ref(true)
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const id = Number(route.params.id)
 
 const fetchCustomer = async (id: number) => {
   isLoading.value = true
   try {
     const response = await GetCustomerDetail(id)
-    customer.value = response
+    customer.value = response.data
     console.log(response)
   } catch (error) {
     console.log(error)
@@ -27,7 +28,6 @@ const fetchCustomer = async (id: number) => {
 }
 
 onMounted(() => {
-  const id = Number(route.params.id)
   if (id) {
     fetchCustomer(id)
   }

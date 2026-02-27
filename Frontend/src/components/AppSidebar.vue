@@ -11,12 +11,14 @@ import {
   Settings,
   Sparkles,
   ChevronRight,
-  LogOut
+  LogOut,
+  FileText
 } from 'lucide-vue-next'
 
 const menuItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/appointments', icon: CalendarDays, label: 'Appointments' },
+  { path: '/transactions', icon: FileText, label: 'Transactions' },
   { path: '/customers', icon: Users, label: 'Customers' },
   { path: '/services', icon: Heart, label: 'Services' },
   { path: '/therapists', icon: UserCircle, label: 'Therapists' },

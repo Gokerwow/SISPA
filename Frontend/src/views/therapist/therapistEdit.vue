@@ -13,11 +13,13 @@ const isLoading = ref(true)
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const id = Number(route.params.id)
+
 
 const fetchTherapist = async (id: number) => {
   try {
     const response = await GetTherapistDetail(id)
-    therapist.value = response
+    therapist.value = response.data
     if (therapist.value) {
       therapist.value.joined_date = formatForInput(therapist.value.joined_date) ?? null
     }
@@ -30,7 +32,6 @@ const fetchTherapist = async (id: number) => {
 }
 
 onMounted(() => {
-  const id = Number(route.params.id)
   if (id) {
     fetchTherapist(id)
   }

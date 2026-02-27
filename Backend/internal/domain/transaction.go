@@ -13,7 +13,8 @@ type Invoice struct {
 	DiscountAmount int        `json:"discount_amount"` // The shop-wide discount
 	GrandTotal     int        `json:"grand_total"`     // Subtotal - Discount
 	Status         string     `json:"status"`          // 'pending', 'paid'
-	Date           *string    `json:"date"`            // "YYYY-MM-DD"
+	PaymentMethod  *string    `json:"payment_method"`
+	Date           *string    `json:"date"` // "YYYY-MM-DD"
 	CreatedAt      *time.Time `json:"created_at,omitempty"`
 }
 
@@ -29,12 +30,12 @@ type InvoiceItem struct {
 
 // This matches the JSON from Vue
 type TransactionRequest struct {
-	NotaNumber string `json:"nota_number"` // Optional, or generate in backend
-	Date       string `json:"date"`        // "2026-02-18"
-	Status     string `json:"status"`      // "pending"
-	Discount   int    `json:"discount"`    // Global discount for invoice
-	Subtotal   int    `json:"sub_total"`   // Sum of all items prices
-	GrandTotal int    `json:"grand_total"` // Subtotal - Discount
+	NotaNumber string `json:"nota_number"`     // Optional, or generate in backend
+	Date       string `json:"date"`            // "2026-02-18"
+	Status     string `json:"status"`          // "pending"
+	Discount   int    `json:"discount_amount"` // Global discount for invoice
+	Subtotal   int    `json:"sub_total"`       // Sum of all items prices
+	GrandTotal int    `json:"grand_total"`     // Subtotal - Discount
 
 	// 💡 This is the magic part: A list inside the struct!
 	Items []TransactionItemRequest `json:"items" binding:"dive"`
@@ -56,7 +57,8 @@ type InvoiceResponse struct {
 
 // struct for status update from frontend
 type UpdateStatusRequest struct {
-	Status string `json:"status" binding:"required"`
+	Status        string `json:"status" binding:"required"`
+	PaymentMethod string `json:"payment_method"`
 }
 
 type TransactionRepository interface {
@@ -64,12 +66,14 @@ type TransactionRepository interface {
 	GetAllHeader(c context.Context) ([]Invoice, error)
 	GetHeaderByID(c context.Context, id int) (*Invoice, error)
 	GetDetailByID(c context.Context, id int) ([]InvoiceItem, error)
-	UpdateStatus(c context.Context, id int, status string) error
+	UpdateStatus(c context.Context, id int, status string, PaymentMethod string) error
+	UpdateTransaction(c context.Context, id int, invoice *Invoice, items []InvoiceItem) error
 }
 
 type TransactionsUsecase interface {
 	CreateTransaction(c context.Context, req *TransactionRequest) (*InvoiceResponse, error)
 	GetAllInvoiceHeaders(c context.Context) ([]Invoice, error)
 	GetAllInvoiceDetails(c context.Context, id int) (*InvoiceResponse, error)
-	UpdateInvoiceStatus(c context.Context, id int, status string) (*InvoiceResponse, error)
+	UpdateInvoiceStatus(c context.Context, id int, status string, PaymentMethod string) (*InvoiceResponse, error)
+	UpdateTransaction(c context.Context, id int, req *TransactionRequest) (*InvoiceResponse, error)
 }

@@ -23,7 +23,14 @@ func (u *TransactionsUsecase) CreateTransaction(c context.Context, transaction *
 	}
 
 	timestamp := time.Now().Format("20060102-150405")
-	notaNumber := "INV-" + timestamp
+
+	var notaNumber string
+
+	if transaction.NotaNumber == "" {
+		notaNumber = "INV-" + timestamp
+	} else {
+		notaNumber = transaction.NotaNumber
+	}
 
 	invoice := domain.Invoice{
 		NotaNumber:     notaNumber,
@@ -112,8 +119,8 @@ func (u *TransactionsUsecase) GetAllInvoiceHeaders(c context.Context) ([]domain.
 	return header, err
 }
 
-func (u *TransactionsUsecase) UpdateInvoiceStatus(c context.Context, id int, status string) (*domain.InvoiceResponse, error) {
-	err := u.repo.UpdateStatus(c, id, status)
+func (u *TransactionsUsecase) UpdateInvoiceStatus(c context.Context, id int, status string, PaymentMethod string) (*domain.InvoiceResponse, error) {
+	err := u.repo.UpdateStatus(c, id, status, PaymentMethod)
 	if err != nil {
 		return nil, err
 	}
@@ -124,4 +131,67 @@ func (u *TransactionsUsecase) UpdateInvoiceStatus(c context.Context, id int, sta
 	}
 
 	return invoice, nil
+}
+
+func (u *TransactionsUsecase) UpdateTransaction(c context.Context, id int, req *domain.TransactionRequest) (*domain.InvoiceResponse, error) {
+	if req.Date == "" {
+		return nil, errors.New("Transaction Date is required")
+	}
+
+	invoice := domain.Invoice{
+		NotaNumber:     req.NotaNumber,
+		Subtotal:       req.Subtotal,
+		DiscountAmount: req.Discount,
+		GrandTotal:     req.GrandTotal,
+		Status:         req.Status,
+		Date:           &req.Date,
+	}
+
+	invoiceItems := []domain.InvoiceItem{}
+
+	for _, item := range req.Items {
+		var invoiceItem domain.InvoiceItem
+
+		service, err := u.serviceRepo.GetByID(c, item.ServiceID)
+		if err != nil {
+			return nil, err
+		}
+
+		customer, err := u.customerRepo.GetByID(c, item.CustomerID)
+		if err != nil {
+			return nil, err
+		}
+
+		var price int
+
+		switch customer.CustomerType {
+		case "male":
+			price = service.PriceMale
+		case "female":
+			price = service.PriceFemale
+		default:
+			price = service.PriceTourist
+		}
+
+		invoiceItem = domain.InvoiceItem{
+			ServiceID:   item.ServiceID,   // Comes from the Vue request
+			TherapistID: item.TherapistID, // Comes from the Vue request
+			CustomerID:  item.CustomerID,  // Comes from the Vue request
+			Price:       price,            // 💡 Comes from the Database! (Security)
+		}
+
+		invoiceItems = append(invoiceItems, invoiceItem)
+	}
+
+	err := u.repo.UpdateTransaction(c, id, &invoice, invoiceItems)
+	if err != nil {
+		return nil, err
+	}
+
+	details, err := u.GetAllInvoiceDetails(c, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return details, nil
 }

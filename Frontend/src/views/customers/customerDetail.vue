@@ -3,7 +3,6 @@ import { ref, onMounted, computed } from 'vue'
 import {
   User,
   Phone,
-  Mail,
   MapPin,
   Calendar,
   DollarSign,
@@ -13,28 +12,29 @@ import {
   Trash2,
   ArrowLeft,
   Gift,
-  Heart,
   Star,
   Activity,
   FileText
 } from 'lucide-vue-next'
 import { DeleteCustomers, GetCustomerDetail } from '@/services/customers'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import type { FullCustomer } from '@/types/customer'
 
-// Sample data (replace with actual API call)
+const route = useRoute()
+
 const customer = ref<FullCustomer | null>(null)
 const loading = ref(true)
 const error = ref('')
 const router = useRouter()
 const toast = useToast()
+const id = Number(route.params.id)
 
 // Fetch customer data
 const fetchCustomer = async (customerId: number) => {
   try {
     const response = await GetCustomerDetail(customerId)
-    customer.value = await response
+    customer.value = await response.data
     console.log(response)
   } catch (err) {
     error.value = (err as Error).message
@@ -44,9 +44,9 @@ const fetchCustomer = async (customerId: number) => {
 }
 
 onMounted(() => {
-  // Get customer ID from route params or props
-  const customerId = 1 // Replace with actual route param
-  fetchCustomer(customerId)
+  if (id) {
+    fetchCustomer(id)
+  }
 })
 
 // Get initials for avatar

@@ -2,6 +2,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { Heart, Plus, Search, DollarSign, Edit2, Trash2, Eye, Filter, Sparkles } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
+import { GetAllServices } from '@/services/services'
 
 // Service interface
 export interface Services {
@@ -23,9 +24,8 @@ const refreshTrigger = ref(0)
 // Fetch Logic
 const fetchServices = async () => {
   try {
-    const response = await fetch('http://localhost:8080/services')
-    if (!response.ok) throw new Error("Failed to fetch services")
-    services.value = await response.json()
+    const response = await GetAllServices()
+    services.value = response.data
     console.log(services.value)
   } catch (err) {
     error.value = (err as Error).message

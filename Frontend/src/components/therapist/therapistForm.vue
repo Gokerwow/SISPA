@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { reactive, watch } from 'vue'
 import {
   UserCircle,
   Phone,
@@ -7,7 +7,6 @@ import {
   Save,
   X,
   Calendar,
-  Percent,
   User
 } from 'lucide-vue-next'
 import type { Therapist } from '@/types/therapist';

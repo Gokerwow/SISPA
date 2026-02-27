@@ -13,11 +13,12 @@ const isLoading = ref(true)
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const id = Number(route.params.id)
 
 const fetchService = async (id: number) => {
   try {
     const response = await GetServiceDetail(id)
-    service.value = response
+    service.value = response.data
     console.log(service.value)
   } catch (error) {
     console.log(error)
@@ -27,7 +28,6 @@ const fetchService = async (id: number) => {
 }
 
 onMounted(() => {
-  const id = Number(route.params.id)
   if (id) {
     fetchService(id)
   }
@@ -50,7 +50,7 @@ const handleUpdate = async (editedData: Services) => {
 
 <template>
   <div v-if="service">
-    <ServiceForm :initial-data="service" @submit="handleUpdate"/>
+    <ServiceForm :initial-data="service" @submit="handleUpdate" />
   </div>
   <div v-else>
     <p>Loading service details...</p>

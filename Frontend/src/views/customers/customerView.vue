@@ -16,7 +16,8 @@ const refreshTrigger = ref(0)
 // 2. Fetch Logic (The "Jarvis" Connection)
 const fetchCustomers = async () => {
   try {
-    customers.value = await GetAllCustomers()
+    const response = await GetAllCustomers()
+    customers.value = response.data
     console.log(customers.value)
   } catch (err) {
     error.value = (err as Error).message
